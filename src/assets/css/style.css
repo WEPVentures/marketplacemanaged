@@ -36,7 +36,8 @@ h1{font-size:clamp(2rem,7vw,3.4rem)} h2{font-size:clamp(1.5rem,4.5vw,2rem)} h3{f
 details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointer;font-weight:600}details p{color:var(--muted);margin:.6em 0 0}
 /* products */
 .products{grid-template-columns:repeat(2,1fr)}
-@media(min-width:720px){.products{grid-template-columns:repeat(4,1fr)}.steps{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:720px){.products{grid-template-columns:repeat(4,1fr)}.steps{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.steps{grid-template-columns:repeat(4,1fr)}}
 .product{text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff}
 .product img,.noimg{width:100%;aspect-ratio:1;object-fit:cover;background:var(--alt)}
 .pinfo{padding:10px 12px;display:grid;gap:2px}.pinfo strong{font-size:1.15rem}.pinfo small{color:var(--muted)}
