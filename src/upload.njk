@@ -44,4 +44,4 @@ permalink: /upload/
   </div>
 </section>
 <script id="cfg" type="application/json">{{ { supabaseUrl: site.supabaseUrl, anonKey: site.supabaseAnonKey, pageName: site.pageName } | json | safe }}</script>
-<script src="/assets/js/upload.js" defer></script>
+<script src="{{ '/assets/js/upload.js' | assetVersion }}" defer></script>

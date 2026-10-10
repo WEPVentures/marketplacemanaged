@@ -13,7 +13,7 @@
   <meta property="og:type" content="{{ ogType or 'website' }}">
   {% if ogImage %}<meta property="og:image" content="{{ ogImage | absUrl(site.url) }}">{% endif %}
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | assetVersion }}">
   {% block head %}{% endblock %}
 </head>
 <body>

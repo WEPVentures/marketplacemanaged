@@ -1,6 +1,14 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
 
+  // /assets/x.css -> /assets/x.css?v=<content hash>, so a changed file always has a new URL
+  eleventyConfig.addFilter("assetVersion", (url) => {
+    const hash = createHash("md5").update(readFileSync("src" + url)).digest("hex").slice(0, 8);
+    return `${url}?v=${hash}`;
+  });
   eleventyConfig.addFilter("money", (n) => {
     const v = Number(n);
     if (!Number.isFinite(v)) return "";
