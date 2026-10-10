@@ -14,13 +14,13 @@ h1{font-size:clamp(2rem,7vw,3.4rem)} h2{font-size:clamp(1.5rem,4.5vw,2rem)} h3{f
 .site-header{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
 .bar{display:flex;align-items:center;justify-content:space-between;height:60px}
 .nav{display:flex;align-items:center;gap:16px}.nav a:not(.btn){color:var(--ink);text-decoration:none;font-weight:500}
-.badge{display:inline-flex;text-decoration:none;font:700 .95rem/1 Georgia,"Times New Roman",serif;border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+.badge{display:inline-flex;flex:none;white-space:nowrap;text-decoration:none;font:700 .95rem/1 Georgia,"Times New Roman",serif;border:2px solid var(--ink);border-radius:8px;overflow:hidden}
 .badge .b1{padding:7px 8px 7px 10px;color:var(--ink);background:#fff}
 .badge .b2{padding:7px 10px 7px 8px;color:#fff;background:var(--ink)}
 /* buttons */
 .btn{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;font-size:1rem;text-align:center}
 .btn:hover{background:var(--blue-d)}.btn:disabled{opacity:.6;cursor:wait}
-.btn-sm{padding:8px 14px;font-size:.9rem}.btn-lg{padding:16px 28px;font-size:1.1rem}.btn-block{display:block;width:100%}
+.btn-sm{padding:8px 14px;font-size:.9rem;white-space:nowrap}.btn-lg{padding:16px 28px;font-size:1.1rem}.btn-block{display:block;width:100%}
 .btn-msgr{background:var(--msgr)}
 /* sections */
 .hero{padding:56px 0 64px;background:linear-gradient(180deg,var(--alt),#fff)}
@@ -65,3 +65,4 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--blue);border-col
 .notice{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.9rem}
 .done{padding:32px 0}
 .site-footer{border-top:1px solid var(--line);padding:32px 0;margin-top:24px;background:var(--alt)}
+@media(max-width:480px){.badge{font-size:.8rem}.badge .b1{padding:6px 6px 6px 8px}.badge .b2{padding:6px 8px 6px 6px}.nav{gap:10px}.nav a:not(.btn){display:none}.btn-sm{padding:8px 12px;font-size:.85rem}}
