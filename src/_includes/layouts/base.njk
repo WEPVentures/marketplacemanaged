@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if title %}{{ title }} — {% endif %}{{ site.name }}</title>
+  <meta name="description" content="{{ description or site.tagline }}">
+  <link rel="canonical" href="{{ page.url | absUrl(site.url) }}">
+  <meta property="og:site_name" content="{{ site.name }}">
+  <meta property="og:title" content="{{ title or site.name }}">
+  <meta property="og:description" content="{{ description or site.tagline }}">
+  <meta property="og:url" content="{{ page.url | absUrl(site.url) }}">
+  <meta property="og:type" content="{{ ogType or 'website' }}">
+  {% if ogImage %}<meta property="og:image" content="{{ ogImage | absUrl(site.url) }}">{% endif %}
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap bar">
+      <a class="badge" href="/" aria-label="{{ site.name }} home"><span class="b1">Marketplace.</span><span class="b2">Managed.</span></a>
+      <nav class="nav">
+        <a href="/items/">Browse</a>
+        <a class="btn btn-sm" href="/upload/">$5 — List now</a>
+      </nav>
+    </div>
+  </header>
+  <main>{{ content | safe }}</main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <a class="badge" href="/"><span class="b1">Marketplace.</span><span class="b2">Managed.</span></a>
+      <p>$5 flat. You keep 100% of the sale. Local pickup only.</p>
+      <p class="fine">Not affiliated with or endorsed by Meta Platforms, Inc. Facebook and Messenger are trademarks of Meta.</p>
+    </div>
+  </footer>
+</body>
+</html>

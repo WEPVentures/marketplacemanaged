@@ -1,0 +1,10 @@
+{
+  "id": "item-0003",
+  "status": "sold",
+  "title": "Sample: Sold item (never rendered)",
+  "description": "Demonstrates that non-active items get no page.",
+  "price": 10,
+  "condition": "Fair",
+  "photo_urls": [],
+  "published_at": "2026-09-01T12:00:00Z"
+}

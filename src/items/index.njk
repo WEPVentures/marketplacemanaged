@@ -1,0 +1,24 @@
+---
+layout: layouts/base.njk
+title: Available items
+description: Items currently available for local pickup.
+permalink: /items/
+---
+<section class="section">
+  <div class="wrap">
+    <h1>Available items</h1>
+    <p class="lede">All local pickup. Message us on Facebook to arrange.</p>
+    {% if items.length %}
+    <div class="grid products">
+      {% for item in items %}
+      <a class="product" href="/items/{{ item.id }}/">
+        {% if item.photos[0] %}<img src="{{ item.photos[0] }}" alt="{{ item.title }}" loading="lazy">{% else %}<div class="noimg"></div>{% endif %}
+        <div class="pinfo"><strong>{{ item.price | money }}</strong><span>{{ item.title }}</span><small>{{ item.condition }}</small></div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">Nothing listed right now. Check back soon.</p>
+    {% endif %}
+  </div>
+</section>

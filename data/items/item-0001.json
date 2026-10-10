@@ -1,0 +1,10 @@
+{
+  "id": "item-0001",
+  "status": "active",
+  "title": "Sample: DeWalt 20V Cordless Drill",
+  "description": "SAMPLE DATA — delete data/items/*.json once Supabase is connected. Barely used drill with two batteries and charger.",
+  "price": 65,
+  "condition": "Like new",
+  "photo_urls": ["/assets/sample/drill.svg"],
+  "published_at": "2026-10-01T12:00:00Z"
+}

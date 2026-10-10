@@ -1,0 +1,49 @@
+---
+layout: layouts/base.njk
+pagination:
+  data: items
+  size: 1
+  alias: item
+permalink: "/items/{{ item.id }}/"
+eleventyComputed:
+  title: "{{ item.title }}"
+  description: "{{ item.price | money }} · {{ item.condition }} · Local pickup. {{ item.description | truncate(140) }}"
+  ogImage: "{{ item.photos[0] }}"
+  ogType: product
+---
+<section class="section">
+  <div class="wrap item">
+    <p class="crumb"><a href="/items/">← All items</a></p>
+    <div class="item-grid">
+      <div class="gallery">
+        {% if item.photos[0] %}<img class="hero-img" src="{{ item.photos[0] }}" alt="{{ item.title }}">{% endif %}
+        {% if item.photos.length > 1 %}
+        <div class="thumbs">{% for p in item.photos %}{% if not loop.first %}<img src="{{ p }}" alt="{{ item.title }} photo {{ loop.index }}" loading="lazy">{% endif %}{% endfor %}</div>
+        {% endif %}
+      </div>
+      <div class="detail">
+        <h1>{{ item.title }}</h1>
+        <p class="price">{{ item.price | money }}</p>
+        <p><span class="pill">{{ item.condition }}</span> <span class="pill">Local pickup</span></p>
+        <p class="desc">{{ item.description }}</p>
+        <a class="btn btn-msgr btn-lg" href="https://m.me/{{ site.pageName }}?ref={{ item.id }}">Message us on Facebook to arrange local pickup</a>
+      </div>
+    </div>
+  </div>
+</section>
+<script type="application/ld+json">{{ {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "sku": item.id,
+  "name": item.title,
+  "description": item.description,
+  "image": item.photos | absAll(site.url),
+  "itemCondition": item.condition | schemaCondition,
+  "offers": {
+    "@type": "Offer",
+    "url": page.url | absUrl(site.url),
+    "priceCurrency": "USD",
+    "price": item.price,
+    "availability": "https://schema.org/InStock"
+  }
+} | json | safe }}</script>

@@ -1,0 +1,10 @@
+{
+  "id": "item-0002",
+  "status": "active",
+  "title": "Sample: IKEA Kallax Shelf (4x2)",
+  "description": "SAMPLE DATA — delete data/items/*.json once Supabase is connected. White, minor scuffs on one corner.",
+  "price": 40,
+  "condition": "Good",
+  "photo_urls": ["/assets/sample/shelf.svg"],
+  "published_at": "2026-10-02T12:00:00Z"
+}
