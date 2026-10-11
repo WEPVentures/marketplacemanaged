@@ -24,7 +24,7 @@ h1{font-size:clamp(2rem,7vw,3.4rem)} h2{font-size:clamp(1.5rem,4.5vw,2rem)} h3{f
 .btn-msgr{background:var(--blue)}
 /* sections */
 .hero{padding:56px 0 64px;background:linear-gradient(180deg,var(--alt),#fff)}
-.hero{text-align:center}.hero h1{max-width:14em;margin-left:auto;margin-right:auto}.lede{font-size:1.15rem;color:var(--muted);max-width:36em;margin-left:auto;margin-right:auto}
+.hero{text-align:center}.hero h1{max-width:14em;margin-left:auto;margin-right:auto;margin-bottom:.6em}.hero .lede{margin-bottom:1.75rem}.lede{font-size:1.15rem;color:var(--muted);max-width:36em;margin-left:auto;margin-right:auto}
 .eyebrow{font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;margin:0 0 12px}
 .section{padding:48px 0}.section.alt{background:var(--alt)}
 .grid{display:grid;gap:16px}.cards{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
@@ -59,3 +59,4 @@ details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointe
 .addr{font-style:normal;color:var(--muted);line-height:1.6}
 .legal h2{text-align:left}
 .hero h1,.lede,.steps p,.section h2{text-wrap:balance}
+@media(max-width:480px){.wrap{padding:0 22px}.hero{padding:52px 0 60px}.hero h1{font-size:1.85rem;line-height:1.18}.hero .lede{font-size:1.08rem;line-height:1.6}.cta-note{margin-top:14px}.section{padding:56px 0}}
