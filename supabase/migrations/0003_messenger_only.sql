@@ -16,7 +16,8 @@ alter table public.intakes alter column description   drop not null;
 alter table public.intakes alter column condition     drop not null;
 alter table public.intakes alter column works         drop not null;
 
--- photo_urls (paths in a private bucket) -> photo_refs (references to photos held by Meta, e.g. attachment ids/URLs).
+-- photo_urls -> photo_refs: paths of the customer's photos in the PRIVATE `intake-photos` bucket
+-- (transient copies, see the end of this file). Never store Meta attachment URLs here: they are bearer URLs.
 alter table public.intakes drop constraint if exists intakes_photo_urls_check;
 do $$ begin
   if exists (select 1 from information_schema.columns
@@ -29,5 +30,9 @@ alter table public.intakes alter column photo_refs set default '{}';
 
 -- RLS on intakes stays ON with zero policies: the public key can never read or write it.
 
--- 3) The private `intake-photos` bucket is no longer used. Supabase blocks deleting buckets with SQL:
---    delete any files in it, then delete the bucket from Dashboard > Storage (or the Storage API).
+-- 3) `intake-photos` stays, as a PRIVATE, TRANSIENT bucket. Messenger attachment URLs expire, so the agent
+--    downloads each photo (service_role) at receipt, reviews it from that copy, and then either deletes it
+--    (declined) or copies it to the public `item-photos` bucket (approved). Anything left is deleted within
+--    7 days. The browser has no access: the anon upload policy was dropped above and no select policy exists.
+--    NOTE: Supabase Storage has no built-in lifecycle rule and SQL can't delete storage objects, so the
+--    7-day purge must be run by the agent (or an Edge Function) through the Storage API.

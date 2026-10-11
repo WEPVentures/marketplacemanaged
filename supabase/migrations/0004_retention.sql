@@ -1,8 +1,9 @@
 -- Retention + deletion, backing the privacy policy:
 --   "Intake data for items that never list is deleted within 90 days."
 --   "You may request ... deletion at any time."
--- Photos: unreviewed photos never reach our storage (they stay in Messenger on Meta's side), so purging
--- intake rows removes all we hold for an unlisted item. Only listed items have files, in `item-photos`.
+-- Photos: unreviewed photos are held only transiently in the private `intake-photos` bucket (7-day maximum).
+-- SQL cannot delete storage objects, so file deletion is done by the agent / an Edge Function through the
+-- Storage API. These functions only touch rows (and return the file paths that must be removed).
 -- Safe to re-run. Apply after 0003.
 
 create schema if not exists private;
@@ -46,29 +47,37 @@ select cron.unschedule('purge-stale-intakes') where exists (select 1 from cron.j
 select cron.schedule('purge-stale-intakes', '17 3 * * *', $$select private.purge_stale_intakes()$$);
 
 -- 3) On-request deletion for one customer (called by the Messenger agent / an admin with the service_role key).
---    Deletes their published items and intakes and RETURNS the item photo paths so the caller can remove
---    the files from the `item-photos` bucket via the Storage API (Supabase doesn't allow deleting storage
---    objects with SQL). Deleting a customer's data before a sale completes cancels the listing.
-create or replace function public.delete_customer_data(p_psid text) returns text[]
+--    Deletes their published items and intakes and RETURNS {item_photos: [...], intake_photos: [...]} so the
+--    caller can remove those files from `item-photos` / `intake-photos` via the Storage API (SQL can't delete
+--    storage objects). The caller should first confirm the request in the customer's Messenger thread.
+--    Deleting a customer's data before a sale completes cancels the listing. Meta's own copy of the
+--    conversation can't be deleted by us (see the privacy policy).
+drop function if exists public.delete_customer_data(text);
+create or replace function public.delete_customer_data(p_psid text) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
-declare v_paths text[];
+declare v_item_paths text[]; v_intake_paths text[];
 begin
   if p_psid is null or length(trim(p_psid)) = 0 then
     raise exception 'psid required';
   end if;
 
-  select coalesce(array_agg(p), '{}') into v_paths
+  select coalesce(array_agg(p), '{}') into v_item_paths
     from public.items it
     join public.intakes i on i.ref = it.intake_ref
     cross join lateral unnest(it.photo_urls) as p
+   where i.messenger_psid = p_psid;
+
+  select coalesce(array_agg(p), '{}') into v_intake_paths
+    from public.intakes i
+    cross join lateral unnest(i.photo_refs) as p
    where i.messenger_psid = p_psid;
 
   delete from public.items it using public.intakes i
    where it.intake_ref = i.ref and i.messenger_psid = p_psid;
   delete from public.intakes where messenger_psid = p_psid;
 
-  return v_paths;
+  return jsonb_build_object('item_photos', to_jsonb(v_item_paths), 'intake_photos', to_jsonb(v_intake_paths));
 end $$;
 revoke all on function public.delete_customer_data(text) from public, anon, authenticated;
 grant execute on function public.delete_customer_data(text) to service_role;
