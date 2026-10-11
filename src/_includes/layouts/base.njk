@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if title %}{{ title }} — {% endif %}{{ site.name }}</title>
   <meta name="description" content="{{ description or site.tagline }}">
+  {% if noindex %}<meta name="robots" content="noindex">{% endif %}
   <link rel="canonical" href="{{ page.url | absUrl(site.url) }}">
   <meta property="og:site_name" content="{{ site.name }}">
   <meta property="og:title" content="{{ title or site.name }}">

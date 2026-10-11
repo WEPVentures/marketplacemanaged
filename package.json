@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Marketplace. Managed. — $5 flat managed Facebook Marketplace sales",
+  "description": "Marketplace. Managed. \u2014 $5 flat managed Facebook Marketplace sales",
   "scripts": {
     "start": "eleventy --serve",
     "build": "eleventy",
-    "clean": "rm -rf _site"
+    "clean": "rm -rf _site",
+    "test": "node --test test/*.test.mjs"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0"
   }
