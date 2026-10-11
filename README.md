@@ -14,7 +14,7 @@ $5 flat managed Facebook Marketplace sales. The whole intake happens in **Facebo
 | `/` | Landing: hero, benefits, 3-step how it works, FAQ. **Start** button (above the fold, repeated after the how-it-works strip) → `https://m.me/<PAGE_NAME>?ref=site-start` |
 | `/items/` | Browse active items |
 | `/items/{item-id}/` | Per-item page generated at build time (photos, title, description, price, condition, "Message us on Facebook to arrange local pickup" → `m.me/<PAGE_NAME>?ref=<item-id>`, schema.org `Product` JSON-LD, OG tags). These are the URLs Meta's catalog links to. |
-| `/privacy/`, `/terms/` | Placeholders — replace the body in `src/privacy.njk` / `src/terms.njk` with the supplied copy before Meta review |
+| `/privacy/`, `/terms/` | Supplied copy lives in `src/privacy.njk` / `src/terms.njk` |
 
 ## Local dev
 
@@ -84,4 +84,4 @@ Asset URLs (`style.css?v=<hash>`) change whenever the file changes, so a deploy 
 ## Notes
 
 - Meta catalog: item URLs are stable (`/items/item-0042/`). A product feed (CSV/XML) generated at build from the same data is a small addition if needed.
-- `/privacy/` and `/terms/` currently hold placeholder text.
+- `/privacy/` and `/terms/` hold the supplied copy (`src/privacy.njk`, `src/terms.njk`).
