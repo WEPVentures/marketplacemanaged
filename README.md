@@ -1,18 +1,20 @@
 # Marketplace. Managed.
 
-$5 flat managed Facebook Marketplace sales. Customers upload photos + details here, continue in Messenger (quote, $5 Stripe link, listing, negotiation), and keep 100% of the sale. Local pickup only.
+$5 flat managed Facebook Marketplace sales. The whole intake happens in **Facebook Messenger**: the customer taps **Start** on the site, lands in a thread with us, sends photos, answers a few questions, and gets a price range. Our assistant then sends a $5 Stripe payment link in the chat, creates the listing, handles buyers and negotiation. The seller keeps 100% of the sale and hands the item over at local pickup.
 
-**Stack:** Eleventy 3 (static, per-item pages at build time) · Netlify · Supabase (Postgres + Storage) · Stripe (links sent in Messenger — this site never takes payment).
-**Out of scope here:** Messenger bot/webhooks, the agent that polls `intakes` and sends quotes, on-site checkout.
+**The site is the read surface** (marketing + inventory). **Messenger is the write surface** (intake + transaction). There is deliberately **no form, no file input and no upload** on the site, so we never hold unreviewed customer photos: they stay on Meta's infrastructure until the customer approves a listing, and only then are reviewed photos copied to our public `item-photos` bucket.
+
+**Stack:** Eleventy 3 (static, per-item pages at build time) · Netlify · Supabase (Postgres + public item photos) · Stripe (links sent in Messenger; the site never takes payment).
+**Out of scope here:** the Messenger bot/webhooks and the intake-processing agent (separate workstream), and any on-site checkout.
 
 ## Pages
 
 | Path | What |
 |---|---|
-| `/` | Landing: hero, benefits, 3-step how-it-works, FAQ |
-| `/upload/` | Intake form → Supabase → "Upload received" + **Continue in Messenger** → `https://m.me/<PAGE_NAME>?ref=intake-0042` |
+| `/` | Landing: hero, benefits, 3-step how it works, FAQ. **Start** button (above the fold, repeated after the how-it-works strip) → `https://m.me/<PAGE_NAME>?ref=site-start` |
 | `/items/` | Browse active items |
-| `/items/{item-id}/` | Per-item page (photos, price, condition, "Message us on Facebook" CTA, schema.org `Product` JSON-LD + OG tags) — the page Meta's catalog links to |
+| `/items/{item-id}/` | Per-item page generated at build time (photos, title, description, price, condition, "Message us on Facebook to arrange local pickup" → `m.me/<PAGE_NAME>?ref=<item-id>`, schema.org `Product` JSON-LD, OG tags). These are the URLs Meta's catalog links to. |
+| `/privacy/`, `/terms/` | Placeholders — replace the body in `src/privacy.njk` / `src/terms.njk` with the supplied copy before Meta review |
 
 ## Local dev
 
@@ -22,60 +24,64 @@ npm start          # http://localhost:8080
 npm run build      # -> _site/
 ```
 
-With no env vars set, items come from `data/items/*.json` (3 sample files — delete them once Supabase is live) and the upload form simulates a submit. To test against Supabase:
+With no env vars, items come from `data/items/*.json` (3 sample files; delete them once Supabase is live). To build against Supabase: `node --env-file=.env node_modules/.bin/eleventy --serve`.
 
-```bash
-node --env-file=.env node_modules/.bin/eleventy --serve
-```
+## Environment variables
 
-## Environment variables (Netlify > Site settings > Environment variables)
+Set in Netlify > Project configuration > Environment variables. Leave "Contains secret values" **unchecked** for these (they are public values, and the build needs to read them).
 
 | Var | Notes |
 |---|---|
-| `SUPABASE_URL` | Project URL |
-| `SUPABASE_ANON_KEY` | anon / publishable key. Public by design (shipped to the browser); RLS is the protection. **Never put the service_role key in Netlify env for this site.** |
-| `PAGE_NAME` | Facebook Page username for `m.me/<PAGE_NAME>` (Page doesn't exist yet; defaults to `MarketplaceManaged`) |
-| `SITE_URL` | Canonical origin, e.g. `https://marketplacemanaged.com` (falls back to Netlify's `URL`) |
+| `SUPABASE_URL` | Project URL. Build-time only. |
+| `SUPABASE_ANON_KEY` | anon / publishable key. Build-time only; RLS limits it to `items` with `status='active'`. **Never put the service_role key in Netlify.** |
+| `PAGE_NAME` | Facebook Page handle for `m.me/<PAGE_NAME>`. One variable drives every Start / Message link — if the handle changes, edit it here and redeploy. |
+| `SITE_URL` | Canonical origin, e.g. `https://marketplacemanaged.com`. |
+| `SECRETS_SCAN_OMIT_KEYS` | `SUPABASE_URL,SUPABASE_ANON_KEY,SITE_URL,PAGE_NAME` so Netlify's secret scanner doesn't fail the build on public values. |
+| Netlify build hook URL | Not an env var of the site. Create it in Netlify (Build & deploy > Build hooks) and store it in the database: `insert into private.config (key, value) values ('netlify_build_hook', 'https://api.netlify.com/build_hooks/XXXX') on conflict (key) do update set value = excluded.value;` |
 
 ## Supabase setup
 
-1. Create a project. In the SQL editor run, in order: `supabase/migrations/0001_schema.sql`, then `0002_build_hook.sql`. (Or `supabase db push`.) *These were written but not executed against a live project in this repo's session — run them on a scratch project first.*
-2. Copy the project URL + anon key into Netlify env vars.
+Run in the SQL editor (or `supabase db push`), in order:
 
-What the SQL creates:
+1. `supabase/migrations/0001_schema.sql` — tables, RLS, buckets. *(Historical: also created the browser-upload path that 0003 removes.)*
+2. `supabase/migrations/0002_build_hook.sql` — trigger that calls the Netlify build hook.
+3. `supabase/migrations/0003_messenger_only.sql` — removes `submit_intake()` and the anon upload policy, reshapes `intakes` for Messenger.
+4. **Dashboard > Storage:** delete the unused private `intake-photos` bucket (empty it first; Supabase doesn't allow deleting buckets via SQL). After step 3 a fresh project should end with only `item-photos`.
 
-- **`intakes`** — `id, ref (intake-0042), customer_name, title, description, condition, model_number, works, damage, included, photo_urls[], status (new|quoted|paid|listed|sold), quote_band, floor, created_at`. `photo_urls` holds **object paths** in the private bucket.
-- **`items`** — `id (item-0042), intake_ref, title, description, price, condition, photo_urls[], status (active|sold), published_at`.
-- **Buckets** — `intake-photos` (private, 10MB, images only) and `item-photos` (public).
-- **RLS**
-  - `intakes`: RLS on, **zero policies** → the public/anon key can't read or write it directly. The browser inserts only via the `submit_intake()` RPC (security definer; validates photo paths, constraints validate fields) which returns the ref.
-  - `items`: anon can `select` only `status = 'active'`. Sold rows are invisible publicly. No public writes.
-  - `intake-photos`: anon may **insert only**, and only to paths shaped `<uuid>/<n>-<16 hex>.<ext>` (non-guessable; no select/list policy so nothing is readable). `item-photos`: public read by URL, writes only with the service role.
-- The processing agent uses the **service_role** key (bypasses RLS): reads intakes, sets `quote_band`/`floor`/`status`, copies hero/other photos from `intake-photos` into `item-photos`, then inserts the `items` row with `status='active'`.
+Resulting schema:
+
+- **`items`** (published; the only table the site reads): `id (item-0042), intake_ref, title, description, price, condition, photo_urls[], status (active|sold), published_at`.
+- **`intakes`** (created and managed by the Messenger agent; the site never touches it): `id, ref (intake-0042), messenger_psid, customer_name, title, description, condition, model_number, works, damage, included, photo_refs[], status (new|quoted|paid|listed|sold), quote_band, floor, created_at`. Detail fields are nullable because they arrive over several messages. `photo_refs` are references to photos held by Meta, not files on our infrastructure.
+- **Storage:** `item-photos` (public) holds only reviewed, customer-approved listing photos. Public bucket: readable by URL, not listable; no public write policy, so only the service role can write. There is no intake-photos bucket.
+- **RLS:**
+  - `items`: anon/authenticated may `select` only rows with `status = 'active'`. No public writes.
+  - `intakes`: RLS on with **zero policies**. The public key can't read or write it.
+  - The Messenger agent uses the **service_role** key (bypasses RLS): creates intakes, publishes items (copying approved photos into `item-photos` and inserting an `items` row with `status='active'`), and marks them `sold`.
 
 ## Build pipeline: how items become pages
 
-`src/_data/items.js` loads active items at build time → Eleventy pagination (`src/items/item.njk`) emits one page per item at `/items/{id}/`. Sold/missing items simply have no page on the next build.
+`src/_data/items.js` loads active items at build time → Eleventy pagination (`src/items/item.njk`) emits `/items/{id}/` per item. Sold or missing items have no page after the next build.
 
-**Which event calls the build hook:** a DB trigger on `items` (`0002_build_hook.sql`, via `pg_net`) POSTs to the Netlify build hook when
-1. an item row is **inserted with `status='active'`** (accepted/published → page appears), or
-2. an active item is **updated** — in particular `status` → `sold` (page disappears), or price/photos/etc. change, or
+**Which event calls the build hook:** a trigger on `items` (`0002_build_hook.sql`, via `pg_net`) POSTs to the Netlify build hook when
+1. an item row is **inserted with `status='active'`** (accepted/published → page appears),
+2. an active item is **updated** — notably `status` → `sold` (page disappears), or price/photos/etc. change,
 3. an active item is **deleted**.
 
-Setup: Netlify > Site settings > Build & deploy > Build hooks > create one, then run the `insert into private.config …` line from the top of `0002_build_hook.sql`. Result: ~1 minute from event to live page. (If you'd rather call it from the agent, just `POST` the same URL after writing the row and skip the trigger.)
+Result: ~1 minute from event to live page. (Alternatively the agent can `POST` the same hook URL after writing; skip the trigger in that case.)
 
-**Supabase-at-build vs. JSON files in the repo.** Chosen: query Supabase at build (anon key, active rows only), with `data/items/*.json` as the fallback when env vars are absent.
-- Supabase at build: single source of truth, no commits needed, the agent only writes to the DB. Cost: build depends on Supabase being up — so a fetch error *fails the build* and Netlify keeps serving the last good deploy.
-- JSON in repo: no runtime dependency and a git audit trail, but the agent would need to commit/push per item and photos must live somewhere public anyway.
+**Supabase at build vs. JSON files in the repo.** Chosen: query Supabase at build time (anon key, active rows only), with `data/items/*.json` as the fallback when the env vars are absent.
+- Supabase at build: single source of truth; the agent only writes to the DB; no commits needed. Cost: builds depend on Supabase being up — a fetch error *fails the build*, so Netlify keeps serving the last good deploy.
+- JSON in repo: no runtime dependency and a git audit trail, but the agent would have to commit and push per item, and photos need a public home anyway.
 
 ## Netlify deploy
 
-1. Push this repo to GitHub; Netlify > Add new site > Import from GitHub. `netlify.toml` sets build `npm run build`, publish `_site`, Node 22.
-2. Add the env vars above. Deploy.
-3. Add the build hook (above). Later, point `marketplacemanaged.com` at the site (Domain management) and set `SITE_URL`.
+1. Push to GitHub; Netlify > Add new site > Import from GitHub. `netlify.toml` sets `npm run build`, publish `_site`, Node 22.
+2. Add the env vars above and deploy. Point the domain at it (Domain management) and set `SITE_URL`.
+3. Create the build hook and store its URL in `private.config` (see env var table).
 
-## Notes / next
+Asset URLs (`style.css?v=<hash>`) change whenever the file changes, so a deploy reaches phones on the first reload.
 
-- Photos are downscaled client-side to ≤1600px JPEG before upload (HEIC falls back to the original file where the browser can't decode it).
-- Basic spam defense is a honeypot field; add Cloudflare Turnstile or rate limiting before real traffic.
-- Meta catalog: item URLs are stable (`/items/item-0042/`). If you want a feed (CSV/XML) generated at build from the same data, it's a ~20-line addition.
+## Notes
+
+- Meta catalog: item URLs are stable (`/items/item-0042/`). A product feed (CSV/XML) generated at build from the same data is a small addition if needed.
+- `/privacy/` and `/terms/` currently hold placeholder text.
