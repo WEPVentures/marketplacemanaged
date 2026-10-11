@@ -46,7 +46,8 @@ Run in the SQL editor (or `supabase db push`), in order:
 1. `supabase/migrations/0001_schema.sql` — tables, RLS, buckets. *(Historical: also created the browser-upload path that 0003 removes.)*
 2. `supabase/migrations/0002_build_hook.sql` — trigger that calls the Netlify build hook.
 3. `supabase/migrations/0003_messenger_only.sql` — removes `submit_intake()` and the anon upload policy, reshapes `intakes` for Messenger.
-4. **Dashboard > Storage:** delete the unused private `intake-photos` bucket (empty it first; Supabase doesn't allow deleting buckets via SQL). After step 3 a fresh project should end with only `item-photos`.
+4. `supabase/migrations/0004_retention.sql` — daily `pg_cron` job (03:17 UTC) that enforces the privacy policy's 90-day rule (unlisted `new`/`quoted` intakes deleted; unlisted `paid` intakes scrubbed to a minimal record; `listed`/`sold` kept) and `delete_customer_data(psid)` for on-request deletion (service_role only; returns item photo paths so the caller can delete the files from `item-photos` via the Storage API).
+5. **Dashboard > Storage:** delete the unused private `intake-photos` bucket (empty it first; Supabase doesn't allow deleting buckets via SQL). After step 3 a fresh project should end with only `item-photos`.
 
 Resulting schema:
 
