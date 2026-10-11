@@ -47,8 +47,7 @@ Run in the SQL editor (or `supabase db push`), in order:
 2. `supabase/migrations/0002_build_hook.sql` — trigger that calls the Netlify build hook.
 3. `supabase/migrations/0003_messenger_only.sql` — removes `submit_intake()` and the anon upload policy, reshapes `intakes` for Messenger.
 4. `supabase/migrations/0004_retention.sql` — daily `pg_cron` job (03:17 UTC) that enforces the privacy policy's 90-day rule (unlisted `new`/`quoted` intakes deleted; unlisted `paid` intakes scrubbed to a minimal record; `listed`/`sold` kept) and `delete_customer_data(psid)` for on-request deletion (service_role only; returns `{item_photos, intake_photos}` paths so the caller can delete those files via the Storage API; confirm the request in the customer's Messenger thread first).
-5. `supabase/migrations/0005_otn.sql` — adds `otn_token`, `otn_topic`, `otn_opted_in_at` to `intakes` for Messenger One-Time Notification opt-ins (single-use, a sending credential: service-role only, never logged) and makes the 90-day purge erase them.
-6. **Keep the private `intake-photos` bucket** (transient holding for unreviewed photos). Make sure it stays private, with no public policies. Delete any leftover test files in it from Dashboard > Storage. Supabase has no lifecycle rules and SQL can't delete storage objects, so the agent (or an Edge Function) must run the daily 7-day purge through the Storage API.
+5. **Keep the private `intake-photos` bucket** (transient holding for unreviewed photos). Make sure it stays private, with no public policies. Delete any leftover test files in it from Dashboard > Storage. Supabase has no lifecycle rules and SQL can't delete storage objects, so the agent (or an Edge Function) must run the daily 7-day purge through the Storage API.
 
 Resulting schema:
 
