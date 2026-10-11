@@ -53,3 +53,4 @@ details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointe
 @media(max-width:480px){.badge{font-size:.8rem}.badge .b1{padding:6px 6px 6px 8px}.badge .b2{padding:6px 8px 6px 6px}.nav{gap:10px}.nav a:not(.btn){display:none}.btn-sm{padding:8px 12px;font-size:.85rem}}
 .legal{max-width:720px}.legal h2{margin-top:1.6em}.hint{color:var(--muted);font-size:.9rem;margin:.6em 0 0}
 .cta-note{margin:10px 0 0}
+.addr{font-style:normal;color:var(--muted);line-height:1.6}
